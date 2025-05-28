@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-T-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parity Bit Animation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Tailwind gray-100 */
+            color: #1f2937; /* Tailwind gray-800 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+            margin: 0;
+        }
+        .bit {
+            width: 2.5rem; /* Increased size */
+            height: 2.5rem; /* Increased size */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #9ca3af; /* Tailwind gray-400 */
+            margin: 0.25rem;
+            border-radius: 0.375rem; /* Tailwind rounded-md */
+            font-weight: 600;
+            font-size: 1.125rem; /* Increased font size */
+            transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+        }
+        .data-bit {
+            background-color: #e0e7ff; /* Tailwind indigo-100 */
+            border-color: #a5b4fc; /* Tailwind indigo-300 */
+        }
+        .parity-bit-style {
+            background-color: #d1fae5; /* Tailwind green-100 */
+            border-color: #6ee7b7; /* Tailwind green-300 */
+        }
+        .error-bit {
+            background-color: #fee2e2; /* Tailwind red-100 */
+            border-color: #fca5a5; /* Tailwind red-300 */
+            transform: scale(1.1);
+        }
+        .bit-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+        }
+        .control-panel button, .control-panel select, .control-panel label {
+            margin: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            border: 1px solid transparent;
+            font-weight: 500;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .control-panel button {
+            background-color: #4f46e5; /* Tailwind indigo-600 */
+            color: white;
+        }
+        .control-panel button:hover {
+            background-color: #4338ca; /* Tailwind indigo-700 */
+        }
+        .control-panel button:disabled {
+            background-color: #a5b4fc; /* Tailwind indigo-300 */
+            cursor: not-allowed;
+        }
+        .control-panel select {
+            border-color: #d1d5db; /* Tailwind gray-300 */
+        }
+        .section {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem; /* Tailwind rounded-lg */
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); /* Tailwind shadow-md */
+            margin-bottom: 1.5rem;
+            width: 100%;
+            max-width: 700px;
+        }
+        .section-title {
+            font-size: 1.25rem; /* Tailwind text-xl */
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #374151; /* Tailwind gray-700 */
+        }
+        .transmission-channel {
+            height: 4rem; /* Increased height */
+            background-color: #e5e7eb; /* Tailwind gray-200 */
+            border-radius: 0.375rem;
+            margin: 1.5rem 0;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+        .moving-bits-container {
+            display: flex;
+            position: absolute;
+            left: 0;
+            transition: transform 1.5s ease-in-out;
+        }
+        .status-ok {
+            color: #059669; /* Tailwind green-700 */
+            font-weight: 600;
+        }
+        .status-error {
+            color: #dc2626; /* Tailwind red-600 */
+            font-weight: 600;
+        }
+        .explanation {
+            background-color: #eff6ff; /* Tailwind blue-50 */
+            border-left: 4px solid #3b82f6; /* Tailwind blue-500 */
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 0.25rem;
+            color: #1e40af; /* Tailwind blue-800 */
+        }
+        /* Checkbox styling */
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.875rem; /* text-sm */
+            color: #374151; /* gray-700 */
+        }
+        .checkbox-label input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            height: 1.25rem; /* h-5 */
+            width: 1.25rem; /* w-5 */
+            border: 2px solid #9ca3af; /* gray-400 */
+            border-radius: 0.25rem; /* rounded-sm */
+            margin-right: 0.5rem; /* mr-2 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            outline: none;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .checkbox-label input[type="checkbox"]:checked {
+            background-color: #4f46e5; /* indigo-600 */
+            border-color: #4f46e5; /* indigo-600 */
+        }
+        .checkbox-label input[type="checkbox"]:checked::before {
+            content: '✔';
+            font-size: 0.875rem;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="w-full max-w-3xl mx-auto p-4">
+        <h1 class="text-3xl font-bold text-center mb-8 text-indigo-700">Parity Bit Error Detection Animation</h1>
+
+        <div class="control-panel section flex flex-col sm:flex-row justify-around items-center mb-6">
+            <button id="generateDataBtn">Generate New Data</button>
+            <div>
+                <label for="parityTypeSelect" class="mr-2">Parity:</label>
+                <select id="parityTypeSelect">
+                    <option value="even">Even</option>
+                    <option value="odd">Odd</option>
+                </select>
+            </div>
+            <label class="checkbox-label">
+                <input type="checkbox" id="introduceErrorCheckbox">
+                Introduce Error
+            </label>
+            <button id="sendBtn" disabled>Send Data</button>
+            <button id="resetBtn">Reset</button>
+        </div>
+
+        <div id="explanationPanel" class="explanation mb-6">
+            Click "Generate New Data" to start.
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="section">
+                <h2 class="section-title">Sender</h2>
+                <div>Original Data (7 bits):</div>
+                <div id="originalDataContainer" class="bit-container"></div>
+                <div>Calculated Parity Bit:</div>
+                <div id="calculatedParityContainer" class="bit-container"></div>
+                <div>Transmitted Packet (8 bits):</div>
+                <div id="transmittedBitsContainer" class="bit-container"></div>
+            </div>
+
+            <div class="section md:col-span-3">
+                 <h2 class="section-title">Transmission Channel</h2>
+                <div id="transmissionChannel" class="transmission-channel">
+                    <div id="movingBits" class="moving-bits-container"></div>
+                </div>
+            </div>
+
+
+            <div class="section">
+                <h2 class="section-title">Receiver</h2>
+                <div>Received Packet (8 bits):</div>
+                <div id="receivedBitsContainer" class="bit-container"></div>
+                <div>Parity Check:</div>
+                <div id="parityCheckResult" class="mt-2 font-medium">--</div>
+                <div>Status:</div>
+                <div id="statusMessage" class="mt-2 font-bold">--</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const generateDataBtn = document.getElementById('generateDataBtn');
+        const parityTypeSelect = document.getElementById('parityTypeSelect');
+        const introduceErrorCheckbox = document.getElementById('introduceErrorCheckbox');
+        const sendBtn = document.getElementById('sendBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        const originalDataContainer = document.getElementById('originalDataContainer');
+        const calculatedParityContainer = document.getElementById('calculatedParityContainer');
+        const transmittedBitsContainer = document.getElementById('transmittedBitsContainer');
+        
+        const transmissionChannel = document.getElementById('transmissionChannel');
+        const movingBits = document.getElementById('movingBits');
+
+        const receivedBitsContainer = document.getElementById('receivedBitsContainer');
+        const parityCheckResult = document.getElementById('parityCheckResult');
+        const statusMessage = document.getElementById('statusMessage');
+        const explanationPanel = document.getElementById('explanationPanel');
+
+        // State variables
+        let dataBits = [];
+        let parityBitValue;
+        let transmittedPacket = [];
+        let isTransmitting = false;
+
+        // --- Helper Functions ---
+        function createBitElement(value, type = 'data', isError = false) {
+            const bitDiv = document.createElement('div');
+            bitDiv.classList.add('bit');
+            bitDiv.textContent = value;
+            if (type === 'parity') {
+                bitDiv.classList.add('parity-bit-style');
+            } else {
+                bitDiv.classList.add('data-bit');
+            }
+            if (isError) {
+                bitDiv.classList.add('error-bit');
+            }
+            return bitDiv;
+        }
+
+        function displayBits(container, bits, type = 'data', errorIndex = -1) {
+            container.innerHTML = '';
+            bits.forEach((bit, index) => {
+                const bitType = (type === 'packet' && index === bits.length - 1) ? 'parity' : 'data';
+                const isErrorBit = (index === errorIndex);
+                container.appendChild(createBitElement(bit, bitType, isErrorBit));
+            });
+        }
+        
+        function updateExplanation(htmlContent) {
+            explanationPanel.innerHTML = htmlContent;
+        }
+
+        // --- Core Logic ---
+        function generateRandomData() {
+            dataBits = Array(7).fill(0).map(() => Math.round(Math.random()));
+            displayBits(originalDataContainer, dataBits);
+            calculateParity();
+            sendBtn.disabled = false;
+            updateExplanation(`Generated 7 random data bits: <strong>${dataBits.join('')}</strong>. Select parity type and click "Send Data".`);
+        }
+
+        function calculateParity() {
+            if (dataBits.length === 0) return;
+
+            const onesCount = dataBits.filter(bit => bit === 1).length;
+            const parityType = parityTypeSelect.value;
+            let explanation = `Original data: <strong>${dataBits.join('')}</strong>. Number of 1s: ${onesCount}.<br>`;
+
+            if (parityType === 'even') {
+                parityBitValue = (onesCount % 2 === 0) ? 0 : 1;
+                explanation += `Using <strong>Even Parity</strong>. Since there are ${onesCount} '1's (an ${onesCount % 2 === 0 ? 'even' : 'odd'} number), the parity bit is <strong>${parityBitValue}</strong> to make the total count of '1's even.`;
+            } else { // odd parity
+                parityBitValue = (onesCount % 2 === 0) ? 1 : 0;
+                explanation += `Using <strong>Odd Parity</strong>. Since there are ${onesCount} '1's (an ${onesCount % 2 === 0 ? 'even' : 'odd'} number), the parity bit is <strong>${parityBitValue}</strong> to make the total count of '1's odd.`;
+            }
+            
+            displayBits(calculatedParityContainer, [parityBitValue], 'parity');
+            transmittedPacket = [...dataBits, parityBitValue];
+            displayBits(transmittedBitsContainer, transmittedPacket, 'packet');
+            updateExplanation(explanation);
+        }
+
+        function sendData() {
+            if (isTransmitting || transmittedPacket.length === 0) return;
+            isTransmitting = true;
+            sendBtn.disabled = true;
+            generateDataBtn.disabled = true;
+            resetBtn.disabled = true;
+            introduceErrorCheckbox.disabled = true;
+            parityTypeSelect.disabled = true;
+
+            // Clear previous receiver state
+            receivedBitsContainer.innerHTML = '';
+            parityCheckResult.textContent = '--';
+            statusMessage.textContent = '--';
+            statusMessage.className = 'mt-2 font-bold';
+
+
+            let packetToSend = [...transmittedPacket];
+            let errorIntroducedHere = false;
+            let errorBitIndex = -1;
+
+            updateExplanation(`Sending packet: <strong>${packetToSend.join('')}</strong>...`);
+
+            // Prepare moving bits
+            movingBits.innerHTML = '';
+            packetToSend.forEach((bit, index) => {
+                const type = (index === packetToSend.length -1) ? 'parity' : 'data';
+                movingBits.appendChild(createBitElement(bit, type));
+            });
+            movingBits.style.transform = 'translateX(0%)'; // Reset position
+
+
+            // Animate transmission
+            setTimeout(() => {
+                const channelWidth = transmissionChannel.offsetWidth;
+                const bitsWidth = movingBits.offsetWidth;
+                const targetTranslate = channelWidth - bitsWidth; // Ensure it moves fully across
+                movingBits.style.transform = `translateX(${targetTranslate}px)`;
+
+                // Introduce error mid-transmission if checked
+                if (introduceErrorCheckbox.checked) {
+                    setTimeout(() => {
+                        errorBitIndex = Math.floor(Math.random() * packetToSend.length);
+                        packetToSend[errorBitIndex] = packetToSend[errorBitIndex] === 0 ? 1 : 0;
+                        errorIntroducedHere = true;
+                        
+                        // Visually update the bit in the moving container
+                        const bitElements = movingBits.children;
+                        if (bitElements[errorBitIndex]) {
+                            bitElements[errorBitIndex].textContent = packetToSend[errorBitIndex];
+                            bitElements[errorBitIndex].classList.add('error-bit');
+                        }
+                        updateExplanation(`Sending packet... <strong>Oh no! A bit flipped during transmission!</strong> The packet became <strong>${packetToSend.join('')}</strong>.`);
+                    }, 750); // Halfway through 1.5s animation
+                }
+            }, 100);
+
+
+            // After transmission animation completes
+            setTimeout(() => {
+                movingBits.style.transform = 'translateX(0%)'; // Reset for next time, hide it
+                movingBits.innerHTML = ''; // Clear moving bits
+
+                displayBits(receivedBitsContainer, packetToSend, 'packet', errorIntroducedHere ? errorBitIndex : -1);
+                verifyParity(packetToSend, errorIntroducedHere);
+                
+                isTransmitting = false;
+                generateDataBtn.disabled = false;
+                resetBtn.disabled = false;
+                introduceErrorCheckbox.disabled = false;
+                parityTypeSelect.disabled = false;
+                if (dataBits.length > 0) sendBtn.disabled = false;
+
+            }, 1600); // Slightly after 1.5s animation
+        }
+
+        function verifyParity(receivedPacket, errorWasIntroduced) {
+            const onesCountInReceived = receivedPacket.filter(bit => bit === 1).length;
+            const parityType = parityTypeSelect.value;
+            let isValid;
+            let explanation = `Received packet: <strong>${receivedPacket.join('')}</strong>. Number of 1s: ${onesCountInReceived}.<br>`;
+
+            if (parityType === 'even') {
+                isValid = (onesCountInReceived % 2 === 0);
+                explanation += `Checking with <strong>Even Parity</strong>. Total '1's should be even. `;
+            } else { // odd parity
+                isValid = (onesCountInReceived % 2 !== 0);
+                explanation += `Checking with <strong>Odd Parity</strong>. Total '1's should be odd. `;
+            }
+
+            parityCheckResult.textContent = `Count of 1s: ${onesCountInReceived} (${(onesCountInReceived % 2 === 0) ? 'Even' : 'Odd'})`;
+
+            if (isValid) {
+                statusMessage.textContent = 'OK - Data likely correct';
+                statusMessage.className = 'mt-2 font-bold status-ok';
+                explanation += `The count of '1's is ${onesCountInReceived % 2 === 0 ? 'even' : 'odd'}, which is expected. Data is likely correct.`;
+                if(errorWasIntroduced) {
+                     explanation += "<br><strong>Wait!</strong> An error was introduced, but the parity check didn't detect it. This can happen if <strong>two bits (or an even number of bits) flipped</strong>, which this simple parity check can't detect. (This simulation only flips one bit, so this specific message indicates a rare simulation edge case or a logic flaw if it appears without a double error.)";
+                }
+            } else {
+                statusMessage.textContent = 'ERROR - Data corrupted!';
+                statusMessage.className = 'mt-2 font-bold status-error';
+                explanation += `The count of '1's is ${onesCountInReceived % 2 === 0 ? 'even' : 'odd'}, which is <strong>not</strong> expected. An error has been detected!`;
+                 if(!errorWasIntroduced){
+                    explanation += "<br><strong>Hmm!</strong> An error was detected, but we didn't intentionally introduce one. This might indicate a cosmic ray (just kidding!) or a simulation hiccup.";
+                }
+            }
+            updateExplanation(explanation);
+        }
+
+        function resetAnimation() {
+            dataBits = [];
+            transmittedPacket = [];
+            parityBitValue = undefined;
+            isTransmitting = false;
+
+            originalDataContainer.innerHTML = '';
+            calculatedParityContainer.innerHTML = '';
+            transmittedBitsContainer.innerHTML = '';
+            receivedBitsContainer.innerHTML = '';
+            movingBits.innerHTML = '';
+            movingBits.style.transform = 'translateX(0%)';
+
+
+            parityCheckResult.textContent = '--';
+            statusMessage.textContent = '--';
+            statusMessage.className = 'mt-2 font-bold';
+            
+            updateExplanation('Animation reset. Click "Generate New Data" to start again.');
+
+            sendBtn.disabled = true;
+            generateDataBtn.disabled = false;
+            resetBtn.disabled = false;
+            introduceErrorCheckbox.disabled = false;
+            introduceErrorCheckbox.checked = false;
+            parityTypeSelect.disabled = false;
+            parityTypeSelect.value = 'even';
+        }
+
+        // Event Listeners
+        generateDataBtn.addEventListener('click', () => {
+            resetAnimation(); // Reset parts of the state before generating new data
+            generateRandomData();
+        });
+        parityTypeSelect.addEventListener('change', calculateParity);
+        sendBtn.addEventListener('click', sendData);
+        resetBtn.addEventListener('click', resetAnimation);
+
+        // Initial setup
+        resetAnimation(); // Call reset to set initial state correctly
+        // generateRandomData(); // Optionally generate data on load
+
+    </script>
+</body>
+</html>
